@@ -1,0 +1,34 @@
+---
+sidebar_position: 4
+---
+
+# Security and Access
+
+WhenDan is designed with a security-first baseline and role-aware operational access.
+
+## Current Foundation
+
+- Supabase authentication flows for user sign-in and account recovery
+- Permission and role-related schema structures in the data layer
+- Access-aware dashboard workflows for operational actions
+
+## Access Control Model
+
+The codebase includes role/permission-aligned entities and helper functions that support IAM-style behavior.
+
+Practical examples include:
+
+- Permission catalog and user-permission relationships
+- Permission-check function patterns in the database layer
+- Team and user management workflows
+
+## Security Notes
+
+- Keep environment variables in local env files and secret stores
+- Validate all external API usage and request scopes
+- Apply least-privilege principles for service keys and user roles
+
+## Maturity and Scope
+
+Security capabilities continue to evolve as team workflows and deployment patterns are formalized.
+Future docs will include threat model notes, audit guidance, and operational runbooks.
