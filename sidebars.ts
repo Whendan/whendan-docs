@@ -14,10 +14,16 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
  */
 const sidebars: SidebarsConfig = {
   tutorialSidebar: [
-    'intro',
-    'getting-started',
+    'intro', {
+      type: 'category',
+      label: 'Installation',
+      items: [
+        'installation/web-frontend',
+        'installation/mobile-application',
+      ],
+    },
     'security-and-access',
-    'dispatch-and-operations',
+    'dispatch-and-operations'
   ],
 
   // But you can create a sidebar manually
