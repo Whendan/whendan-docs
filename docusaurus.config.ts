@@ -7,7 +7,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'WhenDan Docs',
   tagline: 'Open source logistics operating system documentation',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/whendan_icon.png',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -69,7 +69,7 @@ const config: Config = {
       title: 'WhenDan Docs',
       logo: {
         alt: 'WhenDan Logo',
-        src: 'img/logo.svg',
+        src: 'img/whendan_icon.png',
       },
       items: [
         {
