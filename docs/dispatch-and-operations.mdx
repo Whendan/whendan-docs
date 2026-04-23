@@ -4,30 +4,68 @@ sidebar_position: 5
 
 # Dispatch and Operations
 
-WhenDan supports dispatch-related operations through package assignment, driver workflows, and route data.
+Every day, WhenDan automatically plans driver routes so that dispatchers arrive in the morning with assignments already prepared. This page explains what happens, when it happens, and what to expect.
 
-## Operational Capabilities
+## Daily Route Planning
 
-- Package assignment and tracking workflows
-- Driver and vehicle assignment support
-- Driver shift and route progression visibility
-- Warehouse-centered dispatch coordination
+At approximately **2:00 AM** (local warehouse time), the system runs an automatic route planning process. No action is required from the dispatch team — it runs on its own each night. This is a critical part of our operations, ensuring that drivers have clear routes to follow each day and that time-sensitive deliveries are prioritised.
 
-## Optimization Context
+```mermaid
+flowchart TD
+    A([2:00 AM — Nightly run starts]) --> B[Check for unassigned\npending packages]
+    B --> C{Any packages\nto deliver?}
+    C -- No --> D([Done — no packages available])
+    C -- Yes --> E[Check for vehicles\nwith drivers assigned]
+    E --> F{Any vehicles\navailable?}
+    F -- No --> G([Done — no vehicles found])
+    F -- Yes --> H[Sort packages by due date]
+    H --> H1[Overdue → Highest priority]
+    H --> H2[Due today → High priority]
+    H --> H3[Due in future → Skipped tonight]
+    H1 & H2 --> I[Build the most efficient\nroutes for each driver]
+    I --> J[Save routes and\nassign packages to drivers]
+    J --> K([Routes ready for morning dispatch])
+```
 
-Route and optimization-related models support planning and analysis.
-These models can be used to improve assignment quality and reduce waste in daily operations.
+### What the system looks at
 
-## Language Guidance
+When the nightly process runs, it reviews:
 
-Current docs use the phrase "dispatch support" intentionally.
-As additional automation surfaces are finalised, this section will document which dispatch actions are manual, assisted, or fully automated.
+- **Unassigned packages** — any package that is in a *Pending* status and has not yet been placed on a route.
+- **Active vehicles and drivers** — any vehicle that currently has a driver assigned to it.
 
-## Outcome Focus
+### Which packages are included
 
-The operational goal is consistent:
+Not all pending packages are included in each night's plan:
 
-- Higher equipment utilization
-- Fewer late deliveries
-- Lower fuel and labor waste
-- Better visibility for dispatch and service teams
+| Package due date | What happens |
+|---|---|
+| Overdue (past due) | Included — given the **highest** priority |
+| Due today | Included — given **high** priority |
+| Due in the future | **Not included** — will be planned on a later night |
+
+This ensures that urgent deliveries are always assigned first.
+
+### How routes are assigned
+
+Route planning is powered by [OpenRouteService](https://openrouteservice.org/), a mapping service that calculates the most efficient order of stops using real road networks. The system groups packages into the most efficient routes it can, taking into account each vehicle's capacity and the locations of all delivery stops. Each driver is assigned a route that starts and ends at the warehouse.
+
+Each stop includes approximately **15 minutes** of service time for the driver to complete the delivery.
+
+### What happens if something is missing
+
+- If there are **no packages** to assign that morning, the process finishes without creating any routes and logs a note that no packages were available.
+- If there are **no vehicles or drivers** available, the process also stops and logs that no vehicles were found.
+
+Dispatchers should ensure that driver-vehicle assignments are up to date before the nightly run to avoid gaps in coverage.
+
+## What Dispatchers See in the Morning
+
+After the nightly run completes, each assigned driver will have a route ready with an ordered list of stops. Dispatchers can review these routes, check for any unassigned packages, and make manual adjustments if needed before the day begins.
+
+## Operational Goals
+
+- Overdue and time-sensitive packages are prioritised every night
+- Vehicles are loaded as efficiently as possible
+- Drivers start the day with a clear, ordered route
+- Dispatch teams have visibility into assignments before the morning briefing

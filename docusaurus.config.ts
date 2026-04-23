@@ -8,7 +8,10 @@ const config: Config = {
   title: 'WhenDan Docs',
   tagline: 'Open source logistics operating system documentation',
   favicon: 'img/whendan_icon.png',
-
+  markdown: {
+    mermaid: true,
+  },
+  themes: ['@docusaurus/theme-mermaid'],
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
     v4: true, // Improve compatibility with the upcoming Docusaurus v4
