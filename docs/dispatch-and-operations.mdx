@@ -46,9 +46,15 @@ Not all pending packages are included in each night's plan:
 
 This ensures that urgent deliveries are always assigned first.
 
+
 ### How routes are assigned
 
-Route planning is powered by [OpenRouteService](https://openrouteservice.org/), a mapping service that calculates the most efficient order of stops using real road networks. The system groups packages into the most efficient routes it can, taking into account each vehicle's capacity and the locations of all delivery stops. Each driver is assigned a route that starts and ends at the warehouse.
+Route planning is powered by several advanced routing engines:
+
+- [OpenRouteService](https://openrouteservice.org/): Calculates the most efficient order of stops using real road networks.
+- [VROOM](https://github.com/VROOM-Project/vroom): An open-source tool for vehicle routing and optimization.
+
+The system uses these services to group packages into the most efficient routes possible, taking into account each vehicle's capacity and the locations of all delivery stops. Each driver is assigned a route that starts and ends at the warehouse.
 
 Each stop includes approximately **15 minutes** of service time for the driver to complete the delivery.
 
