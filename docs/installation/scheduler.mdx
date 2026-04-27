@@ -1,0 +1,198 @@
+---
+id: scheduler
+title: Scheduler
+sidebar_position: 2
+---
+
+# Scheduler
+
+The scheduler is a NestJS service that does two jobs:
+
+- proxies selected OpenRouteService and VROOM endpoints for the Whendan platform
+- runs the nightly route optimization job against the Whendan Postgres database
+
+The service listens on port `3002` by default.
+
+## Prerequisites
+
+- Node.js 20+
+- pnpm
+- Docker and Docker Compose if you want to run the container stack
+- Supabase project credentials for the same database
+- An OpenRouteService API key or ORS-compatible endpoint
+- Optional: a VROOM-compatible optimization service if you want to use the `/optimization` proxy route
+
+If you plan to use the bundled Docker Compose routing stack, prepare the host paths mounted by the Compose file:
+
+- `./vroom-conf` for VROOM configuration
+- `./ors-docker` for ORS configuration and data
+- `./graphs` for ORS graph output
+
+## Environment Variables
+
+Set these variables before starting the service:
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `PORT` | No | HTTP port for the scheduler. Defaults to `3002`. |
+| `DB_URL` | Yes | Postgres connection string for the Whendan database. |
+| `SUPABASE_URL` | Yes | Supabase project URL used to validate user tokens. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Service-role key used by the auth guard. |
+| `ORS_BASE_URL` | No | Base URL for ORS-compatible endpoints. Defaults to `https://api.openrouteservice.org`. When using the bundled `ors-app` container, point this at that internal service URL. |
+| `ORS_API_KEY` | No | API key used by the scheduled optimization job when calling ORS. Leave it empty if you are using the built in ORS. |
+| `VROOM_BASE_URL` | No | Base URL for a VROOM-compatible optimization service. When using the bundled `vroom` container, set this to the internal Compose hostname instead of `localhost`. |
+
+Example `.env.local`:
+
+```bash
+PORT=3002
+DB_URL=postgresql://postgres:password@localhost:5432/postgres
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+ORS_BASE_URL=https://api.openrouteservice.org
+ORS_API_KEY=your-ors-api-key
+VROOM_BASE_URL=http://localhost:3000
+```
+
+Example `.env` for Docker Compose with the bundled routing services:
+
+```bash
+PORT=3002
+DB_URL=postgresql://postgres:password@host.docker.internal:5432/postgres
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+ORS_BASE_URL=http://ors-app:8082/ors
+ORS_API_KEY=
+VROOM_BASE_URL=http://vroom:3000
+```
+
+## Install And Run Locally
+
+From the `whendan-scheduler` repository:
+
+1. Install dependencies.
+2. Create `.env.local` or `.env` with the required values.
+3. Start the service in watch mode.
+
+```bash
+pnpm install
+pnpm run start:dev
+```
+
+The scheduler will:
+
+- boot a NestJS server on `http://localhost:3002`
+- load warehouse timezones into memory on startup
+- immediately run a catch-up optimization if a warehouse already passed its local 2 AM run window and no run has been recorded for that date
+- continue polling every 5 minutes to determine whether each warehouse should run its nightly optimization
+
+## Run With Docker Compose
+
+The checked-in Compose file starts three services:
+
+- `scheduler` using `ghcr.io/whendan/whendan-scheduler:main`
+- `vroom` using `ghcr.io/vroom-project/vroom-docker:v1.15.0`
+- `ors-app` using `openrouteservice/openrouteservice:v9.8.0`
+
+To run that stack:
+
+1. Create a `.env` file in `whendan-scheduler`.
+2. If the scheduler should talk to the bundled routing services, set `VROOM_BASE_URL=http://vroom:3000` and set `ORS_BASE_URL` to the internal ORS base URL exposed by `ors-app`.
+3. Prepare the mounted `vroom-conf`, `ors-docker`, and `graphs` directories on the host.
+4. Start the stack.
+
+```bash
+docker compose up
+```
+
+The included Compose file:
+
+- exposes only the scheduler on `3002`
+- keeps `vroom` and `ors-app` on the internal Compose network for container-to-container access
+- passes through the scheduler environment variables from `.env`
+- pulls the published scheduler image by default
+- restarts the service unless it is manually stopped
+
+For local Docker image development, comment the `image` line, uncomment the `build` block in `docker-compose.yml`, and then use:
+
+```bash
+docker compose up --build
+```
+
+## Generate ORS Graphs
+
+If you are running the bundled `ors-app` container, you need to provide an OSM extract and let ORS build routing graphs before route requests will work.
+
+Following the official ORS Docker documentation:
+
+1. Download an `.osm.pbf` extract from a source such as [Geofabrik](https://download.geofabrik.de/).
+2. Create the ORS directories used by the bind mounts if they do not exist yet.
+3. Place your `.osm.pbf` file in `ors-docker/files`.
+4. Start `ors-app` once so ORS can generate its default config files.
+5. Edit `ors-docker/config/ors-config.yml` and point the active profile build source to your mounted file, for example `/home/ors/files/your-region.osm.pbf`.
+6. Recreate the ORS container so it rebuilds the graphs.
+
+Example host setup:
+
+```bash
+mkdir -p ors-docker/files ors-docker/config graphs
+```
+
+Example graph build flow:
+
+```bash
+docker compose up ors-app
+docker compose down
+```
+
+Then update `ors-docker/config/ors-config.yml` so the enabled profiles use your file under `/home/ors/files`.
+
+To force a rebuild after changing the OSM file or ORS profile config, use one of these approaches:
+
+- delete the existing graph folders under `graphs` and start the stack again
+- or set `REBUILD_GRAPHS=True` for `ors-app`, then recreate the container with `docker compose down` followed by `docker compose up`
+
+Watch the ORS logs while graphs are being built:
+
+```bash
+docker compose logs -f ors-app
+```
+
+When graph generation is working, the ORS logs should show the selected config file, the OSM source file under `/home/ors/files`, and profile initialization messages that write graph data into `/home/ors/graphs`.
+
+Reference:
+
+- [Running with Docker](https://giscience.github.io/openrouteservice/run-instance/running-with-docker)
+- [ORS configuration](https://giscience.github.io/openrouteservice/run-instance/configuration/)
+
+## Verify The Installation
+
+Use the process logs as the primary health check.
+On a healthy startup, the service should stay running and the scheduler should begin building its warehouse timezone cache.
+
+You can also call the ORS proxy health endpoint after startup:
+
+```bash
+curl http://localhost:3002/v2/health \
+	-H "x-whendan: Bearer <supabase-access-token>"
+```
+
+Notes:
+
+- the scheduler's API routes are protected by the custom `x-whendan` header
+- the token must be a valid Supabase access token for your Whendan project
+- when the scheduler runs inside Docker Compose, `localhost` refers to the scheduler container itself, not `vroom` or `ors-app`
+
+## Database Notes
+
+The scheduler expects the main Whendan schema objects to exist, including warehouse, package, assignment, and `vrp_*` tables.
+It also reads timezone polygons from `tzdata.timezone`, which is present in `schema/schema.sql`.
+
+## Troubleshooting
+
+- If the service exits on startup with a database error, verify `DB_URL` and confirm the schema has been loaded from the `schema` repository.
+- If authentication fails on proxy routes, verify `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and the access token passed in `x-whendan`.
+- If scheduled optimizations fail, verify `ORS_API_KEY`, warehouse coordinates, vehicle assignments, and that pending packages exist in the database.
+- If `/optimization` fails in Docker Compose, verify `VROOM_BASE_URL` points to `http://vroom:3000` instead of `http://localhost:3000`.
+- If the bundled ORS or VROOM services fail to start, verify the `vroom-conf`, `ors-docker`, and `graphs` host directories exist and contain the required config or graph data.
+- If ORS starts but routes do not work, verify `ors-docker/config/ors-config.yml` points to the correct `.osm.pbf` file and confirm the graphs were rebuilt after the change.

@@ -19,6 +19,7 @@ const sidebars: SidebarsConfig = {
       label: 'Installation',
       items: [
         'installation/web-frontend',
+        'installation/scheduler',
         'installation/mobile-application',
       ],
     },
