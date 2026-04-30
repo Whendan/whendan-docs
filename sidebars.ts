@@ -18,6 +18,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Installation',
       items: [
+        'installation/supabase-setup',
         'installation/web-frontend',
         'installation/scheduler',
         'installation/mobile-application',

@@ -1,0 +1,101 @@
+---
+id: supabase-setup
+title: Supabase Setup
+sidebar_position: 2
+---
+
+import InteractiveCheckbox from '@site/src/components/checkbox';
+
+# Supabase Setup
+
+Use this guide to bootstrap a fresh Supabase project for Whendan before starting the web frontend, scheduler, or server services.
+
+## Prerequisites
+
+- A Supabase account(either self hosted or on supabase.com)
+- Access to the local `schema` repository in this workspace
+- Your local or deployed Whendan app URLs
+
+## Create a New Supabase Project
+
+1. Open the [Supabase dashboard](https://supabase.com/dashboard) and create a new project.
+2. Pick the organization, project name, region, and database password.
+3. Wait for the project to finish provisioning.
+4. From **Project Settings** copy and store these values:
+   - Project URL
+   - anon/public key
+   - service role key
+   - database connection string or database password
+
+Whendan services use the same Supabase project for auth, storage, and the Postgres database, so keep these values available before moving on.
+
+## Bootstrap the Database Schema
+
+The `schema` repository in this workspace is the canonical database bootstrap source. Run the SQL files in this order against a fresh Supabase database:
+
+1. `schema/schema.sql`
+2. `schema/roles.sql`
+3. `schema/default_data.sql`
+
+That order matters:
+
+- `schema.sql` creates extensions, tables, functions, triggers, and policies
+- `roles.sql` applies role-level configuration
+- `default_data.sql` seeds required lookup data such as permissions, package statuses, and vehicle types
+
+### Running the bootstrap scripts
+
+The simplest option is **Supabase Dashboard -> SQL Editor**:
+
+1. Open `schema/schema.sql`, paste it into a new query, and run it.
+2. Repeat for `schema/roles.sql`.
+3. Repeat for `schema/default_data.sql`.
+
+If you prefer local tooling, run the same files in the same order with `psql` or your database client of choice. Do not start with `default_data.sql`; it depends on tables created by `schema.sql`.
+
+## Configure Auth Providers
+
+Whendan already uses Supabase Auth for email/password sign-in and password recovery, and it includes an OTP confirmation route that also supports magic-link style flows.
+
+In **Authentication -> Providers -> Email**:
+
+1. Enable the Email provider.
+2. Enable **Email + Password**.
+3. Enable **Magic Link** if you want passwordless sign-in or email-link onboarding.
+
+In **Authentication -> URL Configuration**:
+
+1. Set **Site URL** to your active frontend origin, for example `http://localhost:3000` during local development.
+2. Add the Whendan auth callback URLs you expect to use, including:
+   - `http://localhost:3000/auth/confirm`
+   - `http://localhost:3000/auth/update-password`
+3. Add matching production URLs for your deployed frontend.
+
+The current frontend also sends sign-up email redirects using `window.location.origin`, so the active frontend origin must be present in your Supabase URL configuration.
+
+## Create the Required Storage Buckets
+
+Create these buckets in **Storage**:
+
+| Bucket | Access | Purpose |
+| --- | --- | --- |
+| `packages` | Private | Package upload images and related package assets |
+| `vehicles` | Public | Vehicle images shown directly in the dashboard |
+| `avatars` | Public | Driver and team profile images |
+
+Recommended bucket setup:
+
+- allow image uploads for all three buckets
+- keep `packages` private because package files are read through signed URLs
+- keep `vehicles` and `avatars` public because the current UI reads them via public URLs
+
+## Post-Setup Checklist
+
+After setup, confirm that:
+
+<InteractiveCheckbox label="The three schema bootstrap scripts ran successfully in order" />
+<InteractiveCheckbox label={<><code>app_permission</code>, <code>package_status</code>, and <code>vehicle_type</code> rows were seeded</>} />
+<InteractiveCheckbox label="Email auth is enabled" />
+<InteractiveCheckbox label="The required storage buckets exist" />
+
+Once those are in place, you can move on to the frontend, scheduler, and server setup docs.
