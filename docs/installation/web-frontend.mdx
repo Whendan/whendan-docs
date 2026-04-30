@@ -10,17 +10,87 @@ sidebar_position: 1
 
 - Node.js 20+
 - pnpm
-- Supabase project and credentials
+- A provisioned Supabase project — follow the [Supabase Setup](./supabase-setup) guide first if you have not done this yet.
+
+## Environment Variables
+
+Copy `.env.example` to `.env.local` and fill in each variable as described below.
+
+```bash
+cp .env.example .env.local
+```
+
+### `NEXT_PUBLIC_SUPABASE_URL`
+
+The base URL of your Supabase project. Every API call the frontend makes is routed through this URL.
+
+**How to find it:**
+
+1. Open the [Supabase Dashboard](https://supabase.com/dashboard) and select your project.
+2. Go to **Project Settings → API**.
+3. Copy the value shown under **Project URL** (e.g. `https://abcdefghijklmnop.supabase.co`).
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://abcdefghijklmnop.supabase.co
+```
+
+---
+
+### `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY`
+
+The anon/public JWT that the browser uses to authenticate requests to Supabase. Row-level security policies limit what this key can access, so it is safe to expose in client-side code.
+
+**How to find it:**
+
+1. In the same **Project Settings → API** page, scroll to **Project API keys**.
+2. Copy the **anon / public** key (not the service role key).
+
+```
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+:::caution
+Never use the **service role** key here. The service role key bypasses row-level security and must only be used in trusted server-side contexts.
+:::
+
+---
+
+### `NEXT_PUBLIC_OSM_TILE_URL`
+
+The tile server URL used by MapLibre to render base map tiles. The `{s}`, `{z}`, `{x}`, and `{y}` placeholders are substituted at runtime.
+
+**Leave this blank (or set it to the default) to use the public OpenStreetMap tile server.** Set a custom URL if you are self-hosting tiles or using a commercial tile provider.
+
+```
+# Public OSM tile server (default)
+NEXT_PUBLIC_OSM_TILE_URL=https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png
+
+# Leave blank to fall back to the same default
+NEXT_PUBLIC_OSM_TILE_URL=
+```
+
+---
+
+### `NEXT_PUBLIC_ORS_SERVER`
+
+The base URL of the [OpenRouteService](https://openrouteservice.org/) instance used for routing, directions, and the snap-to-roads feature. The scheduler also uses this server independently.
+
+**For local development** the default points to the ORS container started by the scheduler's `docker-compose.yml`:
+
+```
+NEXT_PUBLIC_ORS_SERVER=http://localhost:8082/ors
+```
+
+For production, point this at your deployed ORS instance or the public ORS API endpoint.
+
+---
 
 ## Run the App
 
-From the main app workspace:
-
 1. Clone https://github.com/Whendan/whendan
-2. Copy `.env.example` to `.env.local`.
-3. Fill required environment variables.
-4. Install dependencies.
-5. Start development server.
+2. Copy `.env.example` to `.env.local` and fill in each variable using the guidance above.
+3. Install dependencies.
+4. Start the development server.
 
 ```bash
 pnpm install
