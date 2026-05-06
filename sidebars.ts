@@ -25,6 +25,7 @@ const sidebars: SidebarsConfig = {
       ],
     },
     'security-and-access',
+    'service-areas',
     'dispatch-and-operations'
   ],
 

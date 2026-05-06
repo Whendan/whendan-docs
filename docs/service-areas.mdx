@@ -2,21 +2,78 @@
 sidebar_position: 5
 ---
 
+import YouTubePlayer from '@site/src/components/youtube-player';
+
 # Service Areas
 
-As a dispatcher, you manage operations within specific geographic zones called service areas. Service areas define where your team can pick up and deliver packages, helping you optimize routes and ensure efficient coverage. 
-Running a global OpenRouteService (ORS) instance isn’t practical for most businesses. Instead, we use service areas to keep your operations focused and manageable.
+Service areas define where your team is allowed to operate. When dispatch assigns work, WhenDan checks whether addresses fall inside one of your configured zones.
 
+<YouTubePlayer
+	url="https://youtu.be/G6H36Od94Y0?si=lxdXyzYLfMNl69D2"
+	title="Service Areas walkthrough"
+/>
 
-## What is a Service Area?
+Setting these zones correctly helps you:
 
-A service area sets the boundaries for where your services are available. This helps you:
+- Keep drivers within their coverage area
+- Prevent out-of-area assignments
+- Scale operations with clear geographic boundaries
 
-- Assign drivers to the right zones
-- Prevent out-of-area deliveries
-- Plan routes more efficiently
+## Open Service Areas
 
-You can create a service area in two ways:
+1. In the dashboard sidebar, go to `Service`.
+2. Select `Service Areas`.
 
-1. Draw on the map: Use our interactive map tool to outline your service area. This is perfect for custom zones that don’t match city or district lines.
-2. Import from GeoJSON: Already have boundaries defined? Import them as a GeoJSON file to set up your service area instantly.
+On this page, you will see:
+
+- A map of existing zones
+- The `Add Service Area` button
+- Zone hover/click interaction for existing areas
+
+If no zones exist yet, the map starts empty until you create your first area.
+
+## Create A New Service Area
+
+1. Click `Add Service Area`.
+2. Enter a clear `Service Area Name` that dispatch can recognize quickly.
+
+In the editor, you can define coverage in two ways.
+
+## Option 1: Draw Area On The Map
+
+1. Click `Draw Area`.
+2. Click on the map to place boundary points.
+3. Continue clicking to outline your zone.
+4. Double-click to close the polygon.
+5. Click `Edit Area` to adjust points and fine-tune the boundary.
+
+Use this method when you need a custom boundary that does not match a standard administrative region.
+
+## Option 2: Upload GeoJSON
+
+1. Click `Upload GeoJSON`.
+2. Select a `.geojson` file from your local machine.
+3. The map auto-fits to the uploaded geometry.
+4. Confirm the shape and update the area name if needed.
+
+GeoJSON is a standard format used by mapping and government systems for geographic boundaries, and is ideal when you already have validated zone data.
+
+## Save The Service Area
+
+After drawing or uploading your boundary:
+
+1. Verify the zone shape on the map.
+2. Confirm the `Service Area Name`.
+3. Click `Create Service Area`.
+
+The new zone is saved immediately and appears in your Service Areas map for your team.
+
+## Update Or Reset While Editing
+
+The editor also includes utility actions:
+
+- `Edit Area` to modify an existing drawn polygon
+- `Clear Area` to remove the current drawn boundary
+- `Clear GeoJSON` to remove uploaded reference geometry
+
+If needed, you can clear and redraw before submitting.
