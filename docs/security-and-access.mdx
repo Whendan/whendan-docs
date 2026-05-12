@@ -2,33 +2,82 @@
 sidebar_position: 4
 ---
 
-# Security and Access
+# Access Control
 
-WhenDan is designed with a security-first baseline and role-aware operational access.
+WhenDan uses a role-based access control (RBAC) model to determine **who** (a team member) can do **what** (a permission) on **which resource** (packages, drivers, vehicles, etc.).
 
-## Current Foundation
+Access is enforced at two independent layers: the database rejects unauthorized reads and writes using row-level security policies, and the API rejects unauthorized requests using a permission guard before they reach the database. Both layers evaluate the same permission model.
 
-- Supabase authentication flows for user sign-in and account recovery
-- Permission and role-related schema structures in the data layer
-- Access-aware dashboard workflows for operational actions
+## Core Concepts
 
-## Access Control Model
+| Concept | Description |
+|---|---|
+| **Permission** | A single capability expressed as `resource.action` — for example `packages.view` or `drivers.add`. |
+| **Role** | A named group of permissions assigned to a category of team member (e.g. Driver, Dispatcher). |
+| **Team Member** | A user account linked to a role. The team member inherits all permissions attached to that role. |
+| **Direct Grant** | An individual permission assigned directly to a team member, on top of their role. Use sparingly for exceptions. |
 
-The codebase includes role/permission-aligned entities and helper functions that support IAM-style behavior.
+## System Roles
 
-Practical examples include:
+The following roles are system-managed. Default permission sets are listed below. Administrators can grant additional permissions to any role at any time.
 
-- Permission catalog and user-permission relationships
-- Permission-check function patterns in the database layer
-- Team and user management workflows
+| Role | Default Permissions |
+|---|---|
+| **Admin** | TBD |
+| **Manager** | TBD |
+| **Dispatcher** | TBD |
+| **Picker** | TBD |
+| **Technician** | TBD |
+| **Driver** | TBD |
 
-## Security Notes
+:::note
+The first user created in a fresh deployment is automatically granted all permissions, regardless of role, to allow initial setup.
+:::
 
-- Keep environment variables in local env files and secret stores
-- Validate all external API usage and request scopes
-- Apply least-privilege principles for service keys and user roles
+## Permission Reference
 
-## Maturity and Scope
+Permissions are grouped by resource. Each resource supports a subset of the standard actions: **view**, **add**, **update**, and **delete**.
 
-Security capabilities continue to evolve as team workflows and deployment patterns are formalized.
-Future docs will include threat model notes, audit guidance, and operational runbooks.
+| Resource | Available Actions | Description |
+|---|---|---|
+| **Drivers** | view, add, update, delete | Access and manage driver profiles |
+| **Vehicles** | view, add, update, delete | Access and manage fleet vehicles |
+| **Customers** | view, add, update, delete | Access and manage customer records |
+| **Packages** | view, add, update, delete | Access and manage package intake and tracking |
+| **Warehouse** | view, add | Access and log warehouse service entries |
+
+## Team Member Management
+
+Team members are managed from **Fleet → Team members** in the dashboard.
+
+**Adding a team member**
+
+1. Open Fleet → Team members and select **Add Team Member**.
+2. Enter the user's details and select their **Role**.
+3. Optionally grant additional individual permissions on top of the role.
+4. Submit — the user receives credentials and is immediately bound by the assigned permissions.
+
+**Changing a role**
+
+A team member's role can be updated from the team member list. The change takes effect immediately; the member's permissions update to reflect the new role on their next request.
+
+**Granting extra permissions**
+
+If a team member needs a capability outside their role, individual permissions can be granted directly. These are additive — they extend the role's permission set rather than replacing it.
+
+## How Access Is Enforced
+
+Access is checked at two independent layers:
+
+1. **API layer** — every incoming request is validated by a permission guard that checks whether the authenticated user holds the required permission. Unauthorized requests are rejected before reaching any business logic.
+
+2. **Database layer** — Supabase row-level security (RLS) policies call a `has_permission()` function on every table operation. This means even direct database queries or service keys with reduced scope cannot bypass the permission model.
+
+A user is considered to hold a permission if it is attached to their role **or** granted to them directly.
+
+## Best Practices
+
+- **Apply least privilege.** Assign the role that most closely matches the team member's responsibilities. Avoid granting all permissions to operational accounts.
+- **Prefer role grants over direct grants.** Attaching permissions to a role keeps access consistent and easier to audit. Use direct grants only for temporary or one-off exceptions.
+- **Review team access periodically.** When a team member changes responsibilities, update their role rather than accumulating direct grants over time.
+- **Protect the first-user account.** The bootstrap account created during initial setup holds all permissions. Treat it as an administrative account and restrict who can access it.
